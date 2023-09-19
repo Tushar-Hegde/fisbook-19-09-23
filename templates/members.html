@@ -1,0 +1,26 @@
+REQUESTS:
+<br>
+{% for join_req in join_reqs %}
+<form method="POST">
+    {% csrf_token %}
+    {{join_req.user}}
+    <button type = 'submit' name="accept" value={{join_req.user}}>Accept</button>
+</form>
+<br>
+{% endfor %}
+
+MEMBERS :
+<br>
+{% for member in members %}
+<form method="POST">
+    {% csrf_token %}
+    <a href="{% url 'pages:user' member.reg_no %}">{{member.first_name}} - {{member.reg_no}}</a>
+    <button type = 'submit' name="remove" value={{member.reg_no}}>Remove</button>
+    {% if member in mods %}
+        <button type = 'submit' name="removemod" value={{member.reg_no}}>Unmodify</button>
+    {% else %}
+        <button type = 'submit' name="makemod" value={{member.reg_no}}>Modify</button>
+    {% endif %}
+</form>
+<br>
+{% endfor %}
