@@ -9,46 +9,48 @@ from users.models import CustomUser
 # Create your views here.
 
 def forum(request,forum_id):
-
-    if request.method == 'POST':
-        if "chat" in request.POST:
-            room = Forum.objects.get(id=forum_id)
-            roomName = room.name
-            user = request.user.first_name
-            if Room.objects.filter(name=roomName).exists():
-                return redirect('/chat/' + roomName + '/?user=' + user)
+    forum = Forum.objects.get(id=forum_id)
+    members = forum.users.all()
+    if request.user in members:
+        if request.method == 'POST':
+            if "chat" in request.POST:
+                room = Forum.objects.get(id=forum_id)
+                roomName = room.name
+                user = request.user.first_name
+                if Room.objects.filter(name=roomName).exists():
+                    return redirect('/chat/' + roomName + '/?user=' + user)
+                else:
+                    newRoom = Room.objects.create(name=roomName)
+                    newRoom.save()
+                    return redirect('/chat/' + roomName + '/?user=' + user)
             else:
-                newRoom = Room.objects.create(name=roomName)
-                newRoom.save()
-                return redirect('/chat/' + roomName + '/?user=' + user)
-        elif "request" in request.POST:
-            member = CustomUser.objects.get(reg_no=request.POST['request'])
-            forum1 = Forum.objects.get(id=forum_id)
+                form = ScheduleForm(request.POST)
+                if form.is_valid():
+                    event = form.save()
+                    event1 = Events.objects.get(id=event.id)
+                    event1.users_added.add(request.user)
+                    return redirect('/forums/'+forum_id)
+                else:
+                    return HttpResponse(f'Form error: {form.errors}')
+        else:
             events = Events.objects.filter(forum__id = forum_id).order_by('date').filter(Q(date__gte=timezone.now()))
             notices = Notices.objects.filter(forum__id=forum_id)
             form = ScheduleForm()
-            members = forum1.users.all()
-            JoinReq.objects.create(forum=forum1,user=member)
-            context = {'forum':forum1,'events':events,'notices':notices,'form':form,'members':members}
+            context = {'forum':forum,'events':events,'notices':notices,'form':form,'members':members}
             return render(request,'forum.html',context)
-
-        else:
-            form = ScheduleForm(request.POST)
-            if form.is_valid():
-                event = form.save()
-                event1 = Events.objects.get(id=event.id)
-                event1.users_added.add(request.user)
-                return redirect('/forums/'+forum_id)
-            else:
-                return HttpResponse(f'Form error: {form.errors}')
     else:
+        member = CustomUser.objects.get(reg_no=request.user)
         forum = Forum.objects.get(id=forum_id)
-        events = Events.objects.filter(forum__id = forum_id).order_by('date').filter(Q(date__gte=timezone.now()))
-        notices = Notices.objects.filter(forum__id=forum_id)
-        form = ScheduleForm()
-        members = forum.users.all()
-        context = {'forum':forum,'events':events,'notices':notices,'form':form,'members':members}
-        return render(request,'forum.html',context)
+        if request.method == "POST":
+            if "request" in request.POST:
+                req = JoinReq.objects.filter(forum=forum,user=member)
+                if not req:
+                    JoinReq.objects.create(forum=forum,user=member)
+        req = JoinReq.objects.filter(forum=forum,user=member)
+        context = {'req':req}
+        return render(request,'request.html',context)
+        
+        
 
 def test(request):
     return render(request, 'test.html')

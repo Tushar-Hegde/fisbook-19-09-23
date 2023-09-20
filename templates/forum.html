@@ -73,13 +73,7 @@
             <input type = 'hidden' id= 'id' value = {{forum.id}}>
             <button type = 'submit' class = 'btn btn-success btn-lg' name = "chat">Chat</button>
         </form>      
-        
-        {% if request.user not in members %}
-            <form method="post">
-                {% csrf_token %}
-                <button name="request" value={{request.user}}>Request to join</button>
-            </form>
-        {% endif %}
+    
             
             
         </div>

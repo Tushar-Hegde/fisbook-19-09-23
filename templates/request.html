@@ -1,0 +1,8 @@
+{% if not req %}
+    <form method="post">
+        {% csrf_token %}
+        <button name="request" value={{request.user}}>Request to join</button>
+    </form>
+{% else %}
+    Requested.
+{% endif %}
